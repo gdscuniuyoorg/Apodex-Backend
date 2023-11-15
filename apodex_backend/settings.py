@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'user_app.apps.UserAppConfig'
+    'user_app.apps.UserAppConfig',
+    'drf_yasg',
 ]
 
 AUTH_USER_MODEL = 'user_app.CustomUser'
