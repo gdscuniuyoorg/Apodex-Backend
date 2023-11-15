@@ -5,11 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserLoginSerializer, UserProfileSerializer, UserProfileUpdateSerializer, UserRegisterSerializer
 
+from django.contrib.auth import authenticate
+
 class UserRegisterView(APIView):
     """
     View for user registration.
 
-    Allows users to register by providing email, password, and optional name.
+    Allows users to register by providing email and password.
     """
     def post(self, request, *args, **kwargs):
         """
@@ -25,9 +27,13 @@ class UserRegisterView(APIView):
         """
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({'detail': 'User registered successfully'}, status=status.HTTP_201_CREATED)
+            user_data = serializer.save()
+            return Response({
+                'detail': 'User registered successfully',
+                'user_data': user_data,
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserLoginView(APIView):
     """
@@ -49,7 +55,8 @@ class UserLoginView(APIView):
         """
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        email = serializer.validated_data['email']
+        user = authenticate(request, email=email, password=serializer.validated_data['password'])
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
@@ -104,7 +111,7 @@ class UpdateProfileView(APIView):
         Returns:
         - The user profile object.
         """
-        return request.user.profile
+        return request.user.userprofile
 
     def get(self, request, *args, **kwargs):
         """
@@ -139,3 +146,33 @@ class UpdateProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class PasswordResetView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, *args, **kwargs):
+        profile = request.user.userprofile
+        serializer = UserProfileUpdateSerializer(profile, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'detail': 'Password reset successfully'}, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    """
+    API view to retrieve details of the user profile.
+
+    Requires authentication for access.
+    """
+    permission_classes = [IsAuthenticated]
+
+
+    def get(self, request, *args, **kwargs):
+        # Access the UserProfile from the CustomUser instance
+        profile = request.user.userprofile
+        serializer = UserProfileSerializer(profile)
+        return Response(serializer.data)
+

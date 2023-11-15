@@ -15,7 +15,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('email', 'password', 'password2', 'name')
+        fields = ('email', 'password', 'password2')
 
     def validate(self, data):
         password = data.get('password')
@@ -32,6 +32,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         email = validated_data['email']
         password = validated_data['password']
 
+        # Check if a user with the same email already exists
+        existing_user = get_user_model().objects.filter(email=email).first()
+        if existing_user:
+            raise serializers.ValidationError({"email": [" user with this email already exists."]})
+
+        # If no existing user, proceed with creating the new user
         user = get_user_model().objects.create_user(
             email=email,
             password=password,
@@ -47,26 +53,20 @@ class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
 
-class UserProfileSerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=255)
-    about = serializers.CharField()
-    short_description = serializers.CharField(max_length=255)
-    instagram_link = serializers.URLField(required=False, allow_blank=True)
-    facebook_link = serializers.URLField(required=False, allow_blank=True)
-    twitter_link = serializers.URLField(required=False, allow_blank=True)
-    profile_photo = serializers.ImageField(required=False)
-
+class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'about', 'short_description', 'instagram_link', 'facebook_link', 'twitter_link', 'profile_photo')
+        model = UserProfile
+        fields = ('first_name', 'last_name', 'name', 'about', 'profile_photo', 'short_description', 'instagram_link', 'facebook_link', 'twitter_link')
 
-class UserProfileUpdateSerializer(UserProfileSerializer):
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
     current_password = serializers.CharField(write_only=True, required=False)
     new_password = serializers.CharField(write_only=True, required=False)
     new_password2 = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = UserProfile
-        fields = UserProfileSerializer.Meta.fields + ('current_password', 'new_password', 'new_password2')
+        fields = ('first_name', 'last_name', 'about', 'short_description', 'instagram_link', 'facebook_link', 'twitter_link', 'profile_photo', 'current_password', 'new_password', 'new_password2', 'name')
 
     def validate(self, data):
         current_password = data.get('current_password')
@@ -79,7 +79,7 @@ class UserProfileUpdateSerializer(UserProfileSerializer):
         if current_password and not self.instance.user.check_password(current_password):
             raise serializers.ValidationError("Incorrect current password.")
 
-        if new_password != new_password2:
+        if new_password and new_password2 and new_password != new_password2:
             raise serializers.ValidationError("New passwords do not match.")
 
         if new_password:
@@ -88,7 +88,8 @@ class UserProfileUpdateSerializer(UserProfileSerializer):
         return data
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.about = validated_data.get('about', instance.about)
         instance.short_description = validated_data.get('short_description', instance.short_description)
         instance.instagram_link = validated_data.get('instagram_link', instance.instagram_link)
@@ -100,6 +101,9 @@ class UserProfileUpdateSerializer(UserProfileSerializer):
         if new_password:
             instance.user.set_password(new_password)
             instance.user.save()
+
+        # Combine first and last names or set to an empty string if both are None
+        instance.name = f"{instance.first_name} {instance.last_name}".strip() or ''
 
         instance.save()
         return instance
