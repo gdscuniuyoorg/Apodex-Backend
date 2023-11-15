@@ -1,59 +1,141 @@
-from django.contrib.auth import get_user_model
-from django.contrib.auth import authenticate, login, logout
-from django.views.decorators.csrf import csrf_exempt
-import json
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import UserLoginSerializer, UserProfileSerializer, UserProfileUpdateSerializer, UserRegisterSerializer
 
+class UserRegisterView(APIView):
+    """
+    View for user registration.
 
-CustomUser = get_user_model()
+    Allows users to register by providing email, password, and optional name.
+    """
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests for user registration.
 
-class RegisterView(APIView):
-   def post(self, request):
-       data = json.loads(request.body)
-       email = data.get('email')
-       password = data.get('password')
-       name = data.get('name')
+        Parameters:
+        - `request`: The HTTP request object.
+        - `args`: Additional arguments passed to the view.
+        - `kwargs`: Additional keyword arguments passed to the view.
 
-       if email and password and name:
-           try:
-               user = CustomUser.objects.create_user(email=email, password=password, name=name)
-               return Response({'message': 'User registered successfully!'}, status=status.HTTP_201_CREATED)
-           except Exception as e:
-               return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-       else:
-           return Response({'error': 'Email, password, and name are required fields.'}, status=status.HTTP_400_BAD_REQUEST)
-
+        Returns:
+        - A Response indicating success or failure of the registration.
+        """
+        serializer = UserRegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'detail': 'User registered successfully'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserLoginView(APIView):
-   def post(self, request):
-       data = json.loads(request.body)
-       email = data.get('email')
-       password = data.get('password')
+    """
+    View for user login.
 
-       user = authenticate(request, email=email, password=password)
+    Allows users to log in by providing their email and password.
+    """
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests for user login.
 
-       if user is not None:
-           login(request, user)
-           return Response({'message': 'Login successful!'}, status=status.HTTP_200_OK)
-       else:
-           return Response({'error': 'Invalid email or password.'}, status=status.HTTP_400_BAD_REQUEST)
+        Parameters:
+        - `request`: The HTTP request object.
+        - `args`: Additional arguments passed to the view.
+        - `kwargs`: Additional keyword arguments passed to the view.
 
+        Returns:
+        - A Response containing the access and refresh tokens upon successful login.
+        """
+        serializer = UserLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
 
 class UserLogoutView(APIView):
-   def post(self, request):
-       logout(request)
-       return Response({'message': 'Logout successful!'}, status=status.HTTP_200_OK)
+    """
+    View for user logout.
 
+    Allows users to log out by providing their refresh token.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests for user logout.
+
+        Parameters:
+        - `request`: The HTTP request object.
+        - `args`: Additional arguments passed to the view.
+        - `kwargs`: Additional keyword arguments passed to the view.
+
+        Returns:
+        - A Response indicating success or failure of the logout.
+        """
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            try:
+                RefreshToken(refresh_token).blacklist()
+                return Response({'detail': 'Logout successful'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({'detail': 'Invalid refresh token'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            return Response({'detail': 'Refresh token is required for logout'}, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateProfileView(APIView):
-   def post(self, request):
-       if request.user.is_authenticated:
-           data = json.loads(request.body)
-           request.user.name = data.get('name', request.user.name)
-           request.user.save()
-           return Response({'message': 'Profile updated successfully!'}, status=status.HTTP_200_OK)
-       else:
-           return Response({'error': 'User not authenticated.'}, status=status.HTTP_400_BAD_REQUEST)
+    """
+    View for updating user profile.
 
+    Allows authenticated users to view and update their profile information.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request):
+        """
+        Get the user profile object associated with the authenticated user.
+
+        Parameters:
+        - `request`: The HTTP request object.
+
+        Returns:
+        - The user profile object.
+        """
+        return request.user.profile
+
+    def get(self, request, *args, **kwargs):
+        """
+        Handle GET requests for retrieving user profile.
+
+        Parameters:
+        - `request`: The HTTP request object.
+        - `args`: Additional arguments passed to the view.
+        - `kwargs`: Additional keyword arguments passed to the view.
+
+        Returns:
+        - A Response containing the user profile data.
+        """
+        profile = self.get_object(request)
+        serializer = UserProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, *args, **kwargs):
+        """
+        Handle PUT requests for updating user profile.
+
+        Parameters:
+        - `request`: The HTTP request object.
+        - `args`: Additional arguments passed to the view.
+        - `kwargs`: Additional keyword arguments passed to the view.
+
+        Returns:
+        - A Response containing the updated user profile data.
+        """
+        profile = self.get_object(request)
+        serializer = UserProfileUpdateSerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
