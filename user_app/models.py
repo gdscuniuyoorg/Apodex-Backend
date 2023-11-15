@@ -39,13 +39,3 @@ class UserProfile(models.Model):
     instagram_link = models.URLField(blank=True)
     facebook_link = models.URLField(blank=True)
     twitter_link = models.URLField(blank=True)
-
-
-@receiver(post_save, sender=CustomUser)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
-
-@receiver(post_save, sender=CustomUser)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()

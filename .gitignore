@@ -3,3 +3,8 @@ venv
 .venv
 .apodex-backend
 migrations/
+__pycache__/
+__pycache__
+_pycache_/
+db.sqlite3
+apodex_backend/__pycache__/
