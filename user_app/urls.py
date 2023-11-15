@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, re_path, include
 from user_app.views import UserRegisterView,UserLoginView,UpdateProfileView,UserLogoutView,UserProfileView, PasswordResetView
 
 urlpatterns = [
