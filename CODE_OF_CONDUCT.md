@@ -43,3 +43,7 @@ Project maintainers who do not follow or enforce the Code of Conduct in good fai
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.0, available at [https://www.contributor-covenant.org/version/2/0/code_of_conduct.html](https://www.contributor-covenant.org/version/2/0/code_of_conduct.html).
 
 For answers to common questions about this code of conduct, see [https://www.contributor-covenant.org/faq](https://www.contributor-covenant.org/faq).
+
+
+
+curl -X POST -d "grant_type=convert_token&client_id=652971690570-99mhaj3b0ui87t4b94gdb3552krqk02k.apps.googleusercontent.com&client_secret=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&backend=google-oauth2&token=ya29.a0AfB_byDfBqyvo_duyyOq9RoNueuBh9iI67AbiUc9wrK9JXwgV5h_koNZH9mJ06xipBzxh0SSnFKZTNdj1mSAxre2CsyLYewTrloh350Tuv95ZlabhXLn3J-sgvEO_VcUghuf6OAXJhuNJvbV1hOBKPx8eCl3F6oIA9txaCgYKAb4SARISFQHGX2MiH8YeMS6yeulmLMCVe0bLlA0171" http://localhost:8000/auth/convert-token

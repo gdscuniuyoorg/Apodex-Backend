@@ -32,6 +32,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
     name = models.CharField(max_length=255)
     about = models.TextField()
     profile_photo = models.ImageField(upload_to='profile_photos/')
@@ -39,13 +41,3 @@ class UserProfile(models.Model):
     instagram_link = models.URLField(blank=True)
     facebook_link = models.URLField(blank=True)
     twitter_link = models.URLField(blank=True)
-
-
-@receiver(post_save, sender=CustomUser)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
-
-@receiver(post_save, sender=CustomUser)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
