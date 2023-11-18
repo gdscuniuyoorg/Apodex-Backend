@@ -206,9 +206,8 @@ SOCIALACCOUNT_PROVIDERS = {
         # (``socialaccount`` app) containing the required client
         # credentials, or list them here:
         'APP': {
-            'client_id': os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY'),
-            'secret': os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
-,
+            'client_id': '652971690570-99mhaj3b0ui87t4b94gdb3552krqk02k.apps.googleusercontent.com',
+            'secret': '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',
             'key': ''
         },
         'LOGIN_REDIRECT_URL':'http://127.0.0.1:8000',
@@ -219,7 +218,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'FIELDS': ['email', 'name'],
     }
 }
-SOCIALACCOUNT_ADAPTER = 'user_app.adapters.CustomSocialAccountAdapter'
+LOGIN_REDIRECT_URL='http://127.0.0.1:8000'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
