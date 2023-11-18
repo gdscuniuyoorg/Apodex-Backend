@@ -1,0 +1,22 @@
+<!-- your_project/templates/socialaccount/google/login.html -->
+
+{% extends "socialaccount/base.html" %}
+
+{% block head_title %}{% trans "Login via Google" %}{% endblock %}
+
+{% block head_text %}{% trans "Sign in via Google" %}{% endblock %}
+
+{% block content %}
+<script>
+    // Function to open the Google sign-in popup
+    function openPopup() {
+        window.open("{% provider_login_url 'google' method='oauth2' %}", 'google-popup', 'width=600,height=400');
+    }
+
+    // Open the popup on page load
+    window.onload = openPopup;
+</script>
+
+{# The rest of the default template content goes here #}
+
+{% endblock %}

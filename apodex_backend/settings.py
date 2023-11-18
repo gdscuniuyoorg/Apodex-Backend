@@ -53,6 +53,11 @@ INSTALLED_APPS = [
     'social_django',
     'drf_social_oauth2',
     'corsheaders',
+
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
 
 AUTH_USER_MODEL = 'user_app.CustomUser'
@@ -69,6 +74,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'apodex_backend.urls'
@@ -180,20 +187,44 @@ REST_FRAMEWORK = {
 }
 AUTHENTICATION_BACKENDS = (
     # Google  OAuth2
+   'allauth.account.auth_backends.AuthenticationBackend',
+
    'social_core.backends.google.GoogleOAuth2',
    'drf_social_oauth2.backends.DjangoOAuth2',
    'django.contrib.auth.backends.ModelBackend',
+
 
 )
 # Google configuration
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET =os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 
-# Define SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE to get extra permissions from Google.
-SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
-]
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'APP': {
+            'client_id': os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY'),
+            'secret': os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+,
+            'key': ''
+        },
+        'LOGIN_REDIRECT_URL':'http://127.0.0.1:8000',
+        'REDIRECT_URI': 'http://localhost:8000/accounts/google/login/callback/',
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'METHOD': 'oauth2',
+        'FIELDS': ['email', 'name'],
+    }
+}
+SOCIALACCOUNT_ADAPTER = 'user_app.adapters.CustomSocialAccountAdapter'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+
 ACTIVATE_JWT = True
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
