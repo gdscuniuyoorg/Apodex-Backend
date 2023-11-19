@@ -53,6 +53,8 @@ urlpatterns = [
     path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('api/', include('user_app.urls')),
     path('auth/', include('drf_social_oauth2.urls', namespace='social')),
-    path('auth/complete/', include('drf_social_oauth2.urls', namespace='complete'))
+    path('auth/complete/', include('drf_social_oauth2.urls', namespace='complete')),
+    
+    path('accounts/', include('allauth.urls')),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
